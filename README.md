@@ -14,8 +14,8 @@ cd ~/claude-config
 ```
 
 The script symlinks everything into `~/.claude`, so a `git pull` updates it.
-If something is already there it asks: skip, replace (the old one is kept as
-`<name>.backup-<time>`), or show a diff. Your own `CLAUDE.md` is never
+If something is already there it asks: skip, replace (the old one is moved to
+`~/.claude/.config-backups/<time>/`), or show a diff. Your own `CLAUDE.md` is never
 replaced: the rules go in as `claude-config.md`, and the script offers to add
 one `@claude-config.md` line to your `CLAUDE.md`.
 

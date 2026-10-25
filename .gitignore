@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
-*.backup-*
+.config-backups/
 .idea/
 .vscode/
 .DS_Store

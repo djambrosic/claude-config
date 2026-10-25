@@ -12,7 +12,9 @@ set -euo pipefail
 
 repo_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 claude_directory="${CLAUDE_HOME:-$HOME/.claude}"
-backup_suffix=".backup-$(date +%Y%m%d-%H%M%S)"
+# Backups go in a hidden folder of their own. Beside the original they would be
+# found as extra skills, because Claude Code loads every folder under skills/.
+backup_directory="$claude_directory/.config-backups/$(date +%Y%m%d-%H%M%S)"
 dry_run=false
 
 if [ "${1:-}" = "--dry-run" ]; then
@@ -29,16 +31,19 @@ else
   interactive=false
 fi
 
-# Asks a question and prints the answer. $1 is the question, $2 the allowed keys.
+# Asks a question and prints the answer. $1 is the question, $2 the choices
+# written the way the user sees them, such as "y/n". One letter is enough.
 ask() {
-  local question="$1" allowed_keys="$2" answer
+  local question="$1" choices="$2" answer
+  local allowed_keys="${choices//\//}"
   while true; do
-    read -r -p "$question [$allowed_keys] " answer
-    answer="${answer:0:1}"
+    read -r -p "$question [$choices] " answer
+    answer="$(printf '%s' "${answer:0:1}" | tr '[:upper:]' '[:lower:]')"
     if [[ "$answer" =~ ^[$allowed_keys]$ ]]; then
       echo "$answer"
       return
     fi
+    echo "  Please type one of: $choices" >&2
   done
 }
 
@@ -68,30 +73,42 @@ install_item() {
   fi
 
   echo "  exists: $target_path"
+  local same_content=false
+  if diff -rq "$target_path" "$source_path" > /dev/null 2>&1; then
+    same_content=true
+    echo "  same content as this repository's copy"
+  fi
   if ! $interactive; then
     echo "  skipped (no terminal to ask on)"
     return
   fi
 
   while true; do
-    choice="$(ask "  [s]kip, [r]eplace (keeps a backup), [d]iff?" "srd")"
+    choice="$(ask "  Skip, replace (keeps a backup) or show the diff?" "s/r/d")"
     case "$choice" in
       s)
         echo "  skipped"
         return
         ;;
       r)
+        local backup_path="$backup_directory/${target_path#"$claude_directory"/}"
         if $dry_run; then
-          echo "  would back up to $target_path$backup_suffix and link"
+          echo "  would back up to $backup_path and link"
         else
-          mv "$target_path" "$target_path$backup_suffix"
-          echo "  backed up to $target_path$backup_suffix"
+          mkdir -p "$(dirname "$backup_path")"
+          mv "$target_path" "$backup_path"
+          echo "  backed up to $backup_path"
         fi
         make_link "$source_path" "$target_path"
         return
         ;;
       d)
-        diff -ru "$target_path" "$source_path" || true
+        if $same_content; then
+          echo "  no differences, skipped"
+          return
+        else
+          diff -ru "$target_path" "$source_path" || true
+        fi
         ;;
     esac
   done
@@ -115,7 +132,7 @@ install_instructions() {
     return
   fi
 
-  if [ "$(ask "  Add '$import_line' to $user_file?" "yn")" != "y" ]; then
+  if [ "$(ask "  Add '$import_line' to $user_file?" "y/n")" != "y" ]; then
     echo "  not added; add '$import_line' to $user_file yourself to use these rules"
     return
   fi
