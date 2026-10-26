@@ -4,6 +4,10 @@
 #
 #   ./install.sh             install, asking before touching anything that exists
 #   ./install.sh --dry-run   show what would happen, change nothing
+#   ./install.sh --rules-only
+#                            link only the rules and the status line, for a
+#                            machine that gets the skills, agent and hook from
+#                            the plugin (see README). Combines with --dry-run.
 #
 # Safe to run again: anything already linked here is left alone.
 # Set CLAUDE_HOME to install somewhere other than ~/.claude.
@@ -16,13 +20,18 @@ claude_directory="${CLAUDE_HOME:-$HOME/.claude}"
 # found as extra skills, because Claude Code loads every folder under skills/.
 backup_directory="$claude_directory/.config-backups/$(date +%Y%m%d-%H%M%S)"
 dry_run=false
+rules_only=false
 
-if [ "${1:-}" = "--dry-run" ]; then
-  dry_run=true
-elif [ -n "${1:-}" ]; then
-  echo "Unknown option: $1" >&2
-  exit 1
-fi
+for argument in "$@"; do
+  case "$argument" in
+    --dry-run) dry_run=true ;;
+    --rules-only) rules_only=true ;;
+    *)
+      echo "Unknown option: $argument" >&2
+      exit 1
+      ;;
+  esac
+done
 
 # Without a terminal we cannot ask, so anything that needs a decision is skipped.
 if [ -t 0 ]; then
@@ -153,6 +162,20 @@ install_instructions
 
 echo "Status line"
 install_item "$repo_directory/statusline-command.sh" "$claude_directory/statusline-command.sh"
+
+if $rules_only; then
+  cat <<MESSAGE
+
+Done. Skills, the qa agent and the Bash hook are not linked: install the
+"workflow" plugin for those. Not linking them here as well avoids duplicate
+skills and a hook that runs twice.
+
+The status line still needs this in settings.json:
+
+  "statusLine": {"type": "command", "command": "bash ~/.claude/statusline-command.sh"}
+MESSAGE
+  exit 0
+fi
 
 echo "Hooks"
 for hook_path in "$repo_directory"/hooks/*; do

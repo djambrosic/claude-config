@@ -24,6 +24,22 @@ It does not edit `settings.json`. Add the status line and the hook from
 
 Needs `bash`, `python3` and, for the status line, `jq`. Linux and macOS.
 
+## Use as a plugin
+
+The repository is also a plugin named `workflow`. It carries the skills (as
+`/workflow:<skill>`), the `qa` agent and the Bash hook.
+
+```bash
+/plugin marketplace add Cindervane/cindervane-plugins
+/plugin install workflow@cindervane-plugins
+./install.sh --rules-only   # rules and status line, which plugins cannot carry
+```
+
+- Never combine the plugin with a full `./install.sh` on one machine: the
+  skills would load twice and the hook would run twice.
+- To publish a change, bump `version` in `.claude-plugin/plugin.json` and push.
+  Without a new version, installed copies do not update.
+
 ## What is in it
 
 | Path | What it is |
