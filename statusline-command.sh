@@ -15,8 +15,12 @@
 #   context_window.used_percentage      pre-computed, null before first response
 #   rate_limits.five_hour.used_percentage
 #   rate_limits.five_hour.resets_at     epoch SECONDS (number)
+#   cost.total_cost_usd                 this session's estimated cost
 # rate_limits appears only for Claude.ai subscribers, and only once a window
 # has been reported by the API; each segment is omitted when its data is absent.
+#
+# Optional: set CLAUDE_STATUSLINE_BUDGET_USD (e.g. 20) to add a
+# "budget: $1.84/$20.00" segment for API or Enterprise billing.
 
 input=$(cat)
 
@@ -36,7 +40,7 @@ RESET=$'\033[0m'
 # Joined on "|" rather than @tsv: tab is IFS whitespace, so bash collapses
 # runs of tabs and drops empty fields, shifting present values into absent
 # fields' slots.
-IFS='|' read -r model cwd ctx_in ctx_out ctx_size ctx_pct five_pct five_reset <<< "$(
+IFS='|' read -r model cwd ctx_in ctx_out ctx_size ctx_pct five_pct five_reset cost_cents budget_cents <<< "$(
   printf '%s' "$input" | jq -r '[
     (.model.display_name // .model.id // ""),
     (.workspace.current_dir // .cwd // ""),
@@ -45,7 +49,10 @@ IFS='|' read -r model cwd ctx_in ctx_out ctx_size ctx_pct five_pct five_reset <<
     (.context_window.context_window_size // ""),
     (.context_window.used_percentage // ""),
     (.rate_limits.five_hour.used_percentage // ""),
-    (.rate_limits.five_hour.resets_at // "")
+    (.rate_limits.five_hour.resets_at // ""),
+    # Money is passed on as whole cents, because bash cannot do decimals.
+    (if .cost.total_cost_usd != null then (.cost.total_cost_usd * 100 | round) else "" end),
+    ((($ENV.CLAUDE_STATUSLINE_BUDGET_USD // "") | tonumber? // null) | if . != null and . > 0 then (. * 100 | round) else "" end)
   ] | map(tostring) | join("|")')"
 
 folder="${cwd##*/}"
@@ -120,6 +127,16 @@ if [ -n "$five_pct" ]; then
       seg="${seg} ${C_DIM}($(printf '%dh:%02dm' $(( left / 3600 )) $(( (left % 3600) / 60 )))"$'\033[0m'"${C_DIM})${RESET}"
     fi
   fi
+  line="${line} ${C_DIM}|${RESET} ${seg}"
+fi
+
+# --- session cost against a budget, for API and Enterprise billing ---
+# Only shown when CLAUDE_STATUSLINE_BUDGET_USD is set, so the line stays the
+# same for everyone else. The cost is this session's estimate, not a monthly total.
+if [ -n "$cost_cents" ] && [ -n "$budget_cents" ]; then
+  bpct=$(( cost_cents * 100 / budget_cents ))
+  bcolor=$(pct_color "$bpct")
+  seg="${C_LABEL}budget:${RESET} ${bcolor}$(printf '$%d.%02d' $(( cost_cents / 100 )) $(( cost_cents % 100 )))${C_DIM}/${C_FG}$(printf '$%d.%02d' $(( budget_cents / 100 )) $(( budget_cents % 100 )))${RESET}"
   line="${line} ${C_DIM}|${RESET} ${seg}"
 fi
 

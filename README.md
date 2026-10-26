@@ -45,7 +45,7 @@ The repository is also a plugin named `workflow`. It carries the skills (as
 | Path | What it is |
 |---|---|
 | `CLAUDE.md` | Global rules: naming, comments, databases read-only, git (no commit without asking, no attribution), tools, concise output |
-| `statusline-command.sh` | Model, folder, context bar with absolute tokens (warning colour from 200k), 5-hour limit |
+| `statusline-command.sh` | Model, folder, context bar with absolute tokens (warning colour from 200k), 5-hour limit, and session cost against a budget when `CLAUDE_STATUSLINE_BUDGET_USD` is set |
 | `hooks/native-tools.py` | Stops `cat`, `find`, `sed` and friends in Bash and points to Read, Grep, Glob and Edit |
 | `agents/qa.md` | A tester that never sees the code: it walks a scenario through the running app and reports where the docs or screens let it down |
 | `skills/` | The workflow below, plus `review` |
