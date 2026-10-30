@@ -1,3 +1,9 @@
+<!--
+The user forwards this to someone who has never seen the plan. Write it in
+English, in plain language, with no file paths, class names or plan jargon.
+Blocking questions come first. Delete this comment.
+-->
+
 # Questions for <name or team> - <topic>
 
 <Date>

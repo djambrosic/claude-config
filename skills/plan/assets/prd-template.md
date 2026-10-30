@@ -11,7 +11,7 @@ citing its number.
 ## What someone can do
 
 Each behaviour becomes one or more slices in the plan, so each is something you
-could try.
+could try. Phrase it as "A member can reserve a book".
 
 1. **A <who> can <do something>.**
    - What goes in, what comes out, what is stored.
@@ -35,7 +35,8 @@ instead of repeating their reasoning.
 
 ## Out of scope
 
-What someone will reasonably assume is included, and is not.
+What someone will reasonably assume is included, and is not. Saying so here is
+cheaper than an argument later.
 
 - ...
 
