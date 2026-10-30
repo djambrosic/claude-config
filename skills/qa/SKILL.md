@@ -1,89 +1,48 @@
 ---
 name: qa
-description: Test a finished story or task from the outside - write scenarios in user terms from the PRD and task briefs, matched to what changed (API only, or screens and API together), then have the qa agent walk them on the running app without reading the code, and bring back a report. Use it when the user says "qa this", "test the flow", "walk it through", "write scenarios", or asks whether a story really works for the people who will use it. Runs only when asked.
+description: Test a finished story or task from the outside - write scenarios in user terms from the PRD and briefs, have the qa agent walk them on the running app without reading code, and report back. Use when the user says "qa this", "test the flow", "walk it through" or "write scenarios". Runs only when asked.
 ---
 
 # QA from the outside
 
-Two steps: you write the scenarios, then the `qa` agent runs them. The agent
-never sees the code, so it finds what a real user or a frontend developer would
-find: the docs that guess, the screen that confuses, the answer that does not
-say what to do.
-
-Do not start this on your own. The user asks for it.
+You write the scenarios; the `qa` agent runs them without seeing the code, so
+it gets stuck where a real user or frontend developer would. Run only when the
+user asks.
 
 ## 1. Write the scenarios
 
-Work from the story, not the code: the PRD's behaviours, `decisions.md`, and the
-"Try it" part of each task brief, in `~/.claude/plans/<project>/<topic>/`. If
-there is no plan folder, work from what the user tells you.
+Work from the story, not the code: the PRD's behaviours, `decisions.md` and each
+brief's "Try it", in `~/.claude/plans/<project>/<topic>/`. With no plan folder,
+work from what the user tells you.
 
-Match the scenarios to what changed:
+Match them to what changed:
 
-- **Only the API changed** - scenarios are requests and the answers people
-  rely on: what is sent, what comes back, what is refused and with which
-  message.
-- **Screens and API changed** - scenarios are journeys a person takes through
-  the screens. The API checks sit under them, for what a screen shows and
-  cannot get wrong.
-- **Something else** (a command, a mail, a scheduled job) - the scenario says
-  what the person runs or receives.
+- **API only** - requests and answers: what is sent, what comes back, what is
+  refused and with which message.
+- **Screens and API** - journeys through the screens, with API checks under
+  them for what a screen shows.
+- **Something else** (command, mail, scheduled job) - what the person runs or
+  receives.
 
-Cover for each behaviour: the happy path, every refusal in the PRD, and the
-edges (empty, duplicate, too big, wrong person, already done). A scenario is
-one flow with a clear start; do not cram unrelated behaviours into one.
+Per behaviour, cover the happy path, every refusal in the PRD, and the edges:
+empty, duplicate, too big, wrong person, already done. One flow per scenario.
 
-Save each in `~/.claude/plans/<project>/<topic>/qa/NN-<name>.md`:
+Save each as `qa/NN-<name>.md` in the plan folder, from
+`assets/scenario-template.md`. Never give exact requests or clicks beyond what a
+reader of the docs would know.
 
-```markdown
-# <What the person does>
-
-**Who:** the people in the scenario and how they sign in (names and roles; the
-password goes to the agent in the prompt, never in the file).
-**Goal:** what they are trying to do, in their words.
-
-## Environment
-Where the app runs, how to sign in, what must be running first (workers, mail
-catcher, seed data). Copy it from the project's environment notes (below),
-never from the code.
-
-## What to read
-The documentation the agent may use: paths or URLs of the API docs, user
-guide, screens. Nothing else.
-
-## Steps
-1. What the person does, then what they expect to see or get back.
-2. ...
-
-## Refusals and edges
-- What should be refused, and what the person should be told.
-```
-
-**Environment notes.** The agent cannot read code, so the facts about running
-the app come from you. Keep them per project in
-`~/.claude/plans/<project>/qa-environment.md`: base URL, how to sign in,
-required services, where mail lands, how to start things. If the file is
-missing, ask the user for the facts and write it. Never invent them.
-
-**Never hand the agent exact requests or clicks** beyond what a user of the
-docs would know. The point is to find where someone would get stuck.
+**Environment** comes from `~/.claude/plans/<project>/qa-environment.md`: base
+URL, sign-in, required services, where mail lands, how to start things. If it
+is missing, ask the user and write it. Never invent it, and never take it from
+the code.
 
 ## 2. Run them
 
-Start the `qa` agent with one scenario at a time. In the prompt give it the
-scenario file's path and, if it signs in, the password. Do not give it the code,
-the tests, or your reasoning about the answer.
+Start the `qa` agent with one scenario at a time: the scenario's path and, if
+it signs in, the password. Not the code, the tests or your expectations.
 
-For screens, the agent drives the browser; for an API, it uses a script. Both
-are in its own instructions.
+## 3. Report
 
-## 3. Bring the report back
-
-The agent's final reply is the report. Save it as `report.md` beside the
-scenario, then tell the user, briefly:
-
-- which steps passed and which did not;
-- where the docs or screens let the agent down;
-- what you think is a real bug and what is a docs gap.
-
-Do not fix anything as part of the QA run. The user decides what comes next.
+Save the agent's reply as `qa/NN-<name>-report.md`, beside its scenario. Tell the user which
+steps passed and which failed, where the docs or screens let the agent down,
+and which failures look like real bugs and which like docs gaps. Fix nothing.
