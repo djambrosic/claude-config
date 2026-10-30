@@ -71,7 +71,8 @@ each step ends only when you say so.
 
 Plans live outside the repository, in
 `~/.claude/plans/<project>/<topic>/`: `prd.md`, `decisions.md`, `plan.md`,
-`tasks/`, and anything else for the topic.
+`tasks/`, `handoff.md` from the last build session, `qa/`, and anything else
+for the topic.
 
 ## Make it yours
 
